@@ -1,7 +1,7 @@
 import { Link } from "@/i18n/routing";
 import { createCaptcha } from "@/lib/captcha";
 import { IconTile } from "@/components/icons";
-import { EmptyState, HubArt } from "@/components/graphics";
+import { CourseThumb, EmptyState, HubArt } from "@/components/graphics";
 
 /** @deprecated Prefer IconTile — kept for call sites that still import Mark. */
 export function Mark({ seed }: { seed: string }) {
@@ -11,11 +11,11 @@ export function Mark({ seed }: { seed: string }) {
 export function Crumbs({ items }: { items: Array<{ href?: string; label: string }> }) {
   return (
     <nav aria-label="Breadcrumb">
-      <ol className="flex flex-wrap items-center gap-2 text-sm text-[#ffd7a8]">
+      <ol className="flex flex-wrap items-center gap-2 text-sm text-muted">
         {items.map((item, index) => (
           <li key={`${item.label}-${index}`} className="flex items-center gap-2">
-            {index > 0 ? <span aria-hidden="true">/</span> : null}
-            {item.href ? <Link href={item.href} className="underline decoration-white/30 underline-offset-4 hover:decoration-orange" prefetch>{item.label}</Link> : <span className="text-[#fff8f1]">{item.label}</span>}
+            {index > 0 ? <span aria-hidden="true" className="opacity-40">/</span> : null}
+            {item.href ? <Link href={item.href} className="underline decoration-white/20 underline-offset-4 hover:text-ink hover:decoration-orange" prefetch>{item.label}</Link> : <span className="text-ink">{item.label}</span>}
           </li>
         ))}
       </ol>
@@ -25,38 +25,90 @@ export function Crumbs({ items }: { items: Array<{ href?: string; label: string 
 
 export function PageHead({ title, intro, crumbs }: { title: string; intro?: string; crumbs: Array<{ href?: string; label: string }> }) {
   return (
-    <header className="relative overflow-hidden rounded-[1.5rem] border border-line bg-[color:var(--glass)] px-5 py-7 shadow-card backdrop-blur-xl md:px-8 md:py-9">
+    <header className="relative overflow-hidden rounded-[1.25rem] border border-line bg-[color:var(--card-solid)] px-5 py-6 md:px-8 md:py-8">
       <HubArt seed={title} />
       <div className="relative z-[1] max-w-3xl">
         <Crumbs items={crumbs} />
-        <h1 className="display mt-3 text-3xl text-[#fff8f1] md:text-5xl">{title}</h1>
-        {intro ? <p className="mt-3 max-w-3xl text-[#f6ede6]/90">{intro}</p> : null}
+        <h1 className="display mt-3 text-3xl text-ink md:text-4xl lg:text-[2.75rem]">{title}</h1>
+        {intro ? <p className="mt-3 max-w-2xl text-base text-muted md:text-lg">{intro}</p> : null}
       </div>
     </header>
   );
 }
 
+/** Hub-style card: icon, title, one-line note, trailing arrow — website dashboard, not phone tile. */
 export function CardLink({ href, title, seed, action, note, badge }: { href: string; title: string; seed: string; action: string; note?: string; badge?: string }) {
   return (
     <Link
       href={href}
       prefetch
-      className="card card-interactive group flex h-full flex-col gap-2.5 p-3.5 no-underline sm:p-4"
+      className="card card-interactive group flex h-full items-start gap-3 p-4 no-underline sm:p-5"
       aria-label={`${title}. ${action}`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <IconTile seed={`${seed} ${title}`} size="sm" />
-        {badge ? <span className="rounded-full border border-line bg-white/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#ffd7a8]">{badge}</span> : null}
+      <IconTile seed={`${seed} ${title}`} size="sm" />
+      <span className="min-w-0 flex-1">
+        <span className="flex items-start justify-between gap-2">
+          <h2 className="display text-base leading-snug text-ink sm:text-lg">{title}</h2>
+          {badge ? <span className="shrink-0 rounded-md border border-line bg-bg/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange">{badge}</span> : null}
+        </span>
+        {note ? <p className="mt-1 line-clamp-2 text-sm text-muted">{note}</p> : null}
+      </span>
+      <span className="mt-1 text-muted transition group-hover:translate-x-0.5 group-hover:text-orange" aria-hidden="true">→</span>
+    </Link>
+  );
+}
+
+export function CourseCard({
+  href,
+  title,
+  seed,
+  modules,
+  modulesLabel,
+  badge,
+  progress,
+  progressLabel,
+  locked,
+  action,
+}: {
+  href: string;
+  title: string;
+  seed: string;
+  modules: number;
+  modulesLabel: string;
+  badge?: string;
+  progress?: number;
+  progressLabel?: string;
+  locked?: boolean;
+  action: string;
+}) {
+  const pct = Math.max(0, Math.min(100, progress ?? 0));
+  return (
+    <Link href={href} prefetch className="card card-interactive group flex h-full flex-col gap-3 p-3 no-underline sm:p-4" aria-label={`${title}. ${action}`}>
+      <CourseThumb seed={seed} title={title} />
+      <div className="flex items-start justify-between gap-2 px-0.5">
+        <h2 className="display text-base leading-snug sm:text-lg">{title}</h2>
+        {badge ? (
+          <span className={`shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${locked ? "border-orange/40 text-orange" : "border-line text-muted"}`}>
+            {badge}
+          </span>
+        ) : null}
       </div>
-      <h2 className="display text-base leading-snug text-ink sm:text-lg">{title}</h2>
-      {note ? <p className="line-clamp-2 text-xs text-muted sm:text-sm">{note}</p> : null}
-      <span className="mt-auto pt-1 text-xs font-semibold text-orange opacity-90 transition group-hover:opacity-100">{action} →</span>
+      <p className="px-0.5 text-sm text-muted">{modules} {modulesLabel}</p>
+      {typeof progress === "number" ? (
+        <div className="px-0.5">
+          <div className="mb-1 flex justify-between text-xs text-muted">
+            <span>{progressLabel}</span>
+            <span>{pct}%</span>
+          </div>
+          <div className="progress-bar"><span style={{ width: `${pct}%` }} /></div>
+        </div>
+      ) : null}
     </Link>
   );
 }
 
 export function Grid({ children }: { children: React.ReactNode }) {
-  return <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">{children}</div>;
+  return <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{children}</div>;
 }
 
 export function Notice({ children }: { children: React.ReactNode }) {
@@ -64,7 +116,7 @@ export function Notice({ children }: { children: React.ReactNode }) {
   if (text && /empty|no |missing|none|δεν|geen/i.test(text) && text.length < 120) {
     return <EmptyState title={text} />;
   }
-  return <p className="rounded-2xl border border-line bg-[color:var(--glass)] px-4 py-3 text-ink backdrop-blur-md">{children}</p>;
+  return <p className="rounded-xl border border-line bg-[color:var(--card-solid)] px-4 py-3 text-ink">{children}</p>;
 }
 
 export function DataTable({ columns, rows, empty }: { columns: string[]; rows: string[][]; empty: string }) {
@@ -77,7 +129,7 @@ export function DataTable({ columns, rows, empty }: { columns: string[]; rows: s
         </thead>
         <tbody>
           {rows.map((row, index) => (
-            <tr key={index}>{row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}</tr>
+            <tr key={index} className="hover:bg-white/[0.02]">{row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}</tr>
           ))}
         </tbody>
       </table>
@@ -88,7 +140,7 @@ export function DataTable({ columns, rows, empty }: { columns: string[]; rows: s
 export function CaptchaFields({ label }: { label: string }) {
   const captcha = createCaptcha();
   return (
-    <fieldset className="grid gap-2 rounded-2xl border border-line p-3">
+    <fieldset className="grid gap-2 rounded-xl border border-line p-3">
       <legend className="px-1 font-semibold">{label} {captcha.a} + {captcha.b}?</legend>
       <input name="a" type="hidden" value={captcha.a} />
       <input name="b" type="hidden" value={captcha.b} />
@@ -113,4 +165,8 @@ export function PayMethods({ balance, crypto }: { balance: string; crypto: strin
       <span className="sr-only">{crypto}</span>
     </label>
   );
+}
+
+export function Reveal({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <div className={`reveal is-in ${className}`}>{children}</div>;
 }

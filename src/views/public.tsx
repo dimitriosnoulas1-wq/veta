@@ -2,10 +2,10 @@ import { getTranslations } from "next-intl/server";
 import type { Session } from "next-auth";
 import { Link } from "@/i18n/routing";
 import { CaptchaFields, CardLink, DataTable, Grid, HiddenLocale, Notice, PageHead } from "@/components/ui";
-import { Countdown, HeroDecor, LoginForm } from "@/components/client";
-import { HeroArt, PlanCardShell } from "@/components/graphics";
+import { Countdown, HeroDecor, LoginForm, RevealOnScroll } from "@/components/client";
+import { FeatureMock, HeroArt, PlanCardShell } from "@/components/graphics";
 import { PublicChrome } from "@/components/shell";
-import { ADDRESS, NOTIFY_WHATSAPP, PLAY_STORE, POSITIONING, RANKS, SOCIAL, SUPPORT_WHATSAPP, ACTIVE_UNTIL } from "@/content/catalog";
+import { ADDRESS, HOME_BENEFITS, HOME_FEATURES, NOTIFY_WHATSAPP, PLAY_STORE, POSITIONING, PUBLIC_STATS, RANKS, SOCIAL, SUPPORT_WHATSAPP, ACTIVE_UNTIL } from "@/content/catalog";
 import { flashText, getPlans, getProducts } from "@/lib/data";
 import { safeCallback } from "@/lib/format";
 import { prisma } from "@/lib/db";
@@ -89,9 +89,10 @@ async function Calendar() {
 
 export async function renderPublic(locale: string, slug: string[] | undefined, search: Record<string, string | string[] | undefined>, session: Session | null) {
   const body = await publicBody(locale, slug ?? [], search);
+  const isHome = !(slug && slug.length);
   return (
     <PublicChrome loggedIn={Boolean(session?.user?.id)} admin={session?.user?.role === "ADMIN"}>
-      {body}
+      {isHome ? body : <div className="container-site grid gap-8 py-8 md:py-12">{body}</div>}
     </PublicChrome>
   );
 }
@@ -115,7 +116,10 @@ async function publicBody(locale: string, slug: string[], search: Record<string,
   return <PageHead title={t("missing")} crumbs={[{ href: "/", label: n("home") }, { label: t("missing") }]} />;
 }
 
-function Home({ t }: { t: Awaited<ReturnType<typeof getTranslations>> }) {
+async function Home({ t }: { t: Awaited<ReturnType<typeof getTranslations>> }) {
+  const n = await getTranslations("nav");
+  const plans = await getPlans();
+  const faqs = await prisma.faq.findMany({ orderBy: { sort: "asc" }, take: 6 });
   const cards = [
     ["Leads", "/app/leads"],
     ["Advertising Airtime", "/app/ads"],
@@ -130,37 +134,163 @@ function Home({ t }: { t: Awaited<ReturnType<typeof getTranslations>> }) {
     ["Live Coaches", "/app/coaching"],
   ];
   return (
-    <div className="grid gap-10">
-      <section className="relative overflow-hidden rounded-[1.75rem] border border-line bg-[color:var(--glass)] px-6 py-10 text-[#fff8f1] shadow-card backdrop-blur-xl md:grid md:grid-cols-[1.1fr_0.9fr] md:items-center md:gap-8 md:px-10 md:py-14">
-        <div className="aurora opacity-80" aria-hidden="true" />
-        <div className="relative z-[1]">
-          <p className="display text-sm uppercase tracking-[0.22em] text-[#ffd7a8]">VateLife</p>
-          <h1 className="display mt-3 text-4xl md:text-6xl">Empowering Your Success</h1>
-          <p className="mt-4 max-w-xl text-base text-[#f6ede6]/90 md:text-lg">{t("rangeNote")}</p>
-          <Link className="btn btn-primary mt-6" href="/app" prefetch>Dashboard</Link>
+    <div>
+      <section className="relative overflow-hidden">
+        <div className="container-site grid items-center gap-10 py-14 md:grid-cols-[1.05fr_0.95fr] md:gap-12 md:py-24 lg:py-28">
+          <div>
+            <p className="display text-sm uppercase tracking-[0.22em] text-orange">VateLife</p>
+            <h1 className="display mt-4 text-4xl text-ink sm:text-5xl lg:text-6xl xl:text-[4.25rem]">Empowering Your Success</h1>
+            <p className="mt-5 max-w-xl text-base text-muted md:text-lg">{t("rangeNote")}</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link className="btn btn-primary" href="/register" prefetch>{t("join")}</Link>
+              <Link className="btn btn-ghost" href="/pricing" prefetch>{n("pricing")}</Link>
+            </div>
+          </div>
+          <HeroDecor>
+            <HeroArt />
+          </HeroDecor>
         </div>
-        <HeroDecor>
-          <HeroArt />
-        </HeroDecor>
       </section>
-      <section className="grid gap-4">
-        <h2 className="display text-3xl">WHAT DO YOU GET with Your Membership</h2>
-        <Grid>
-          {cards.map(([title, href]) => <CardLink key={title} href={href} title={title} seed={title} action={t("open")} />)}
-        </Grid>
+
+      <section className="border-y border-line bg-[color:var(--bg-elevated)]">
+        <div className="container-site grid grid-cols-1 gap-6 py-10 sm:grid-cols-3 sm:gap-8 sm:py-12">
+          {PUBLIC_STATS.map((stat) => (
+            <div key={stat.label} className="text-center sm:text-left">
+              <p className="display text-4xl text-ink md:text-5xl">{stat.value}</p>
+              <p className="mt-1 text-sm text-muted">{stat.label}</p>
+            </div>
+          ))}
+        </div>
       </section>
-      <section className="card p-6 md:p-8">
-        <h2 className="display text-3xl">The VateLife Story</h2>
-        <p className="mt-2 text-muted">{t("storyMissing")}</p>
-        <a className="btn btn-plum mt-4" href={PLAY_STORE}>{t("external")}</a>
+
+      {HOME_FEATURES.map((feature, index) => (
+        <RevealOnScroll key={feature.title}>
+          <section className="section-y">
+            <div className={`container-site grid items-center gap-10 md:grid-cols-2 md:gap-14 ${index % 2 === 1 ? "md:[&>*:first-child]:order-2" : ""}`}>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange">0{index + 1}</p>
+                <h2 className="display mt-3 text-3xl md:text-4xl">{feature.title}</h2>
+                <p className="mt-4 max-w-md text-muted">{feature.body}</p>
+                <Link className="btn btn-ghost mt-6" href={feature.href} prefetch>{t("open")} →</Link>
+              </div>
+              <FeatureMock kind={feature.visual} />
+            </div>
+          </section>
+        </RevealOnScroll>
+      ))}
+
+      <section className="border-y border-line bg-[color:var(--bg-elevated)] section-y">
+        <div className="container-site">
+          <RevealOnScroll>
+            <h2 className="display text-3xl md:text-4xl">WHAT DO YOU GET with Your Membership</h2>
+            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {HOME_BENEFITS.map((item) => (
+                <CardLink key={item.title} href={item.href} title={item.title} seed={item.title} action={t("open")} />
+              ))}
+            </div>
+            <div className="mt-8">
+              <Grid>
+                {cards.filter(([title]) => !HOME_BENEFITS.some((item) => item.title === title || item.title.startsWith(title))).map(([title, href]) => (
+                  <CardLink key={title} href={href} title={title} seed={title} action={t("open")} />
+                ))}
+              </Grid>
+            </div>
+          </RevealOnScroll>
+        </div>
       </section>
-      <section className="card p-6 md:p-8">
-        <h2 className="display text-3xl">Testimonials</h2>
-        <p className="mt-2 text-muted">{t("quotesMissing")}</p>
+
+      <section className="section-y">
+        <div className="container-site grid gap-8 md:grid-cols-2">
+          <RevealOnScroll>
+            <article className="card h-full p-6 md:p-8">
+              <h2 className="display text-3xl">The VateLife Story</h2>
+              <p className="mt-3 text-muted">{t("storyMissing")}</p>
+              <a className="btn btn-plum mt-6" href={PLAY_STORE}>{t("external")}</a>
+            </article>
+          </RevealOnScroll>
+          <RevealOnScroll>
+            <article className="card h-full p-6 md:p-8">
+              <h2 className="display text-3xl">Testimonials</h2>
+              <p className="mt-3 text-muted">{t("quotesMissing")}</p>
+              <nav className="mt-6 flex flex-wrap gap-3">
+                {SOCIAL.map((item) => <a key={item.href} className="text-sm underline decoration-white/20 underline-offset-4" href={item.href}>{item.label}</a>)}
+              </nav>
+            </article>
+          </RevealOnScroll>
+        </div>
       </section>
-      <nav className="flex flex-wrap gap-3">
-        {SOCIAL.map((item) => <a key={item.href} className="underline" href={item.href}>{item.label}</a>)}
-      </nav>
+
+      <section className="border-y border-line bg-[color:var(--bg-elevated)] section-y">
+        <div className="container-site">
+          <RevealOnScroll>
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="display text-3xl md:text-4xl">{n("pricing")}</h2>
+              <p className="mt-3 text-muted">{t("rangeNote")}</p>
+            </div>
+            <div className="mt-12 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+              {plans.map((plan) => {
+                const price = plan.interval === "year"
+                  ? `${money(plan.recurringCents)} ${t("annually")}`
+                  : `${money(plan.enrollmentCents)} ${t("oneTime")} + ${money(plan.recurringCents)} ${t("monthly")}`;
+                const popular = plan.code === "PRO";
+                return (
+                  <Link key={plan.code} href={`/app/upgrade?plan=${plan.code}`} className="no-underline" prefetch>
+                    <PlanCardShell
+                      name={plan.name}
+                      price={price}
+                      detail={`${plan.leads} leads · ${plan.impressions.toLocaleString("en-US")} impressions`}
+                      cta={`${t("choose")} ${plan.name}`}
+                      popular={popular}
+                      popularLabel="Most popular"
+                    />
+                  </Link>
+                );
+              })}
+            </div>
+            <p className="mt-6 text-center text-sm text-muted">{t("planKept")}</p>
+            <div className="mt-6 flex justify-center">
+              <Link className="btn btn-ghost" href="/pricing" prefetch>{n("pricing")} →</Link>
+            </div>
+          </RevealOnScroll>
+        </div>
+      </section>
+
+      <section className="section-y">
+        <div className="container-site">
+          <RevealOnScroll>
+            <h2 className="display text-3xl md:text-4xl">{n("faq")}</h2>
+            <p className="mt-3 max-w-2xl text-muted">{t("faqEmpty")}</p>
+            <div className="mt-8 grid gap-3">
+              {faqs.length ? faqs.map((row) => (
+                <article key={row.id} className="card p-5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">{row.category}</p>
+                  <h3 className="display mt-1 text-xl">{row.question}</h3>
+                  <p className="mt-2 text-muted">{row.answer}</p>
+                </article>
+              )) : <Notice>{t("faqEmpty")}</Notice>}
+            </div>
+            <Link className="btn btn-ghost mt-6" href="/faq" prefetch>{n("faq")} →</Link>
+          </RevealOnScroll>
+        </div>
+      </section>
+
+      <section className="border-t border-line">
+        <div className="container-site section-y">
+          <RevealOnScroll>
+            <div className="relative overflow-hidden rounded-[1.5rem] border border-line bg-[color:var(--card-solid)] px-6 py-12 text-center md:px-12 md:py-16">
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet/15 via-transparent to-orange/15" aria-hidden="true" />
+              <div className="relative z-[1]">
+                <h2 className="display text-3xl md:text-5xl">Empowering Your Success</h2>
+                <p className="mx-auto mt-4 max-w-xl text-muted">{t("rangeNote")}</p>
+                <div className="mt-8 flex flex-wrap justify-center gap-3">
+                  <Link className="btn btn-primary" href="/register" prefetch>{t("join")}</Link>
+                  <Link className="btn btn-ghost" href="/contact" prefetch>{n("contact")}</Link>
+                </div>
+              </div>
+            </div>
+          </RevealOnScroll>
+        </div>
+      </section>
     </div>
   );
 }

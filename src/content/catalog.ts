@@ -303,6 +303,107 @@ export const NAV = [
   { href: "/app/support", label: "Support" },
 ] as const;
 
+/** Grouped sidebar for the member SaaS shell. Labels/hrefs match NAV entries. */
+export const NAV_GROUPS = [
+  {
+    id: "learn",
+    label: "Learn",
+    items: [
+      { href: "/app/learn/digital-marketing", label: "Digital Marketing" },
+      { href: "/app/learn/crypto", label: "Crypto Academy" },
+      { href: "/app/learn/ai", label: "AI Academy" },
+      { href: "/app/coaching", label: "Live Coaching" },
+      { href: "/app/trainings", label: "Live Trainings" },
+    ],
+  },
+  {
+    id: "grow",
+    label: "Grow",
+    items: [
+      { href: "/app/leads", label: "Leads" },
+      { href: "/app/broadcast", label: "Emails/Chats Broadcast" },
+      { href: "/app/inviting", label: "Inviting Tools" },
+      { href: "/app/traffic", label: "Traffic Sources" },
+      { href: "/app/software/wizard", label: "Marketing Wizard" },
+    ],
+  },
+  {
+    id: "tools",
+    label: "Tools",
+    items: [
+      { href: "/app/tools", label: "Smart Tools" },
+      { href: "/app/software/cast", label: "WhatsApp/Telegram Cast" },
+      { href: "/app/software/leads", label: "Leads Catcher" },
+    ],
+  },
+  {
+    id: "commerce",
+    label: "Shop & Ads",
+    items: [
+      { href: "/app/shop", label: "eShop" },
+      { href: "/app/ads", label: "Advertising Center" },
+    ],
+  },
+  {
+    id: "team",
+    label: "Team",
+    items: [{ href: "/app/team", label: "My Team" }],
+  },
+  {
+    id: "account",
+    label: "Account / Wallet",
+    items: [
+      { href: "/app/account", label: "My Account" },
+      { href: "/app/wallet", label: "My Wallet" },
+    ],
+  },
+  {
+    id: "support",
+    label: "Support",
+    items: [{ href: "/app/support", label: "Support" }],
+  },
+] as const;
+
+export const PUBLIC_STATS = [
+  { value: String(PLANS.length), label: "Membership plans" },
+  { value: String(COURSES.length), label: "Academy courses" },
+  { value: String(TOOL_GROUPS.reduce((sum, group) => sum + group.tools.length, 0)), label: "Smart tools" },
+] as const;
+
+export const HOME_FEATURES = [
+  {
+    title: "Digital Marketing",
+    href: "/app/learn/digital-marketing",
+    body: ACADEMIES[0].intro,
+    visual: "academy" as const,
+  },
+  {
+    title: "Smart Tools",
+    href: "/app/tools",
+    body: TOOL_GROUPS.map((group) => group.title).join(" · "),
+    visual: "tools" as const,
+  },
+  {
+    title: "Marketing Softwares",
+    href: "/app/software/wizard",
+    body: "Marketing Wizard · WhatsApp/Telegram Cast · Leads Catcher",
+    visual: "software" as const,
+  },
+  {
+    title: "My Team",
+    href: "/app/team",
+    body: "Powerline · Pass-up · Unilevel",
+    visual: "team" as const,
+  },
+] as const;
+
+export const HOME_BENEFITS = [
+  { title: "Leads", href: "/app/leads" },
+  { title: "Advertising Airtime", href: "/app/ads" },
+  { title: "Live Coaches", href: "/app/coaching" },
+  { title: "Inviting Tools & Traffic Sources", href: "/app/inviting" },
+] as const;
+
 export const GLOBAL_LEAD_TOTAL = 200;
 export const LEAD_LEGEND = ["Paid Member", "Free Member", "Trial Member", "Expired Member", "Disabled", "Pending activation members"];
 export const REFERRAL_LEGEND = ["Free", "Paid-Pending", "Paid", "Expired"];

@@ -1,54 +1,97 @@
 import { IconTile } from "@/components/icons";
 
 export function HeroArt() {
+  return <DashboardMock />;
+}
+
+/** Polished member-dashboard mock inside a browser frame for the public hero. */
+export function DashboardMock() {
   return (
-    <div className="relative mx-auto h-56 w-full max-w-md md:h-72" aria-hidden="true">
-      <div className="aurora opacity-90" />
-      <svg viewBox="0 0 420 320" className="relative z-[1] h-full w-full float-y" role="img">
-        <defs>
-          <linearGradient id="vl-orb" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#c084fc" />
-            <stop offset="55%" stopColor="#fb923c" />
-            <stop offset="100%" stopColor="#f43f5e" />
-          </linearGradient>
-          <linearGradient id="vl-panel" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.22)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
-          </linearGradient>
-          <filter id="vl-soft" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="8" />
-          </filter>
-        </defs>
-        <ellipse cx="210" cy="270" rx="120" ry="18" fill="#a855f7" opacity="0.25" filter="url(#vl-soft)" />
-        <rect x="92" y="78" width="236" height="160" rx="28" fill="url(#vl-panel)" stroke="rgba(255,255,255,0.18)" />
-        <circle cx="210" cy="150" r="54" fill="url(#vl-orb)" opacity="0.95" />
-        <circle cx="210" cy="150" r="70" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="2" />
-        <circle cx="210" cy="150" r="88" fill="none" stroke="rgba(251,146,60,0.28)" strokeWidth="1.5" strokeDasharray="6 10" />
-        <rect x="118" y="210" width="184" height="10" rx="5" fill="rgba(255,255,255,0.14)" />
-        <rect x="142" y="228" width="136" height="8" rx="4" fill="rgba(255,255,255,0.1)" />
-        <path d="M70 120c30-40 70-50 110-28" fill="none" stroke="#fb923c" strokeWidth="2" opacity="0.55" />
-        <path d="M340 110c-28-36-72-48-118-22" fill="none" stroke="#c084fc" strokeWidth="2" opacity="0.55" />
-        <circle cx="78" cy="118" r="7" fill="#fb923c" />
-        <circle cx="348" cy="108" r="7" fill="#c084fc" />
-        <circle cx="120" cy="70" r="4" fill="#fff" opacity="0.7" />
-        <circle cx="310" cy="64" r="3" fill="#fff" opacity="0.55" />
-        <circle cx="250" cy="48" r="2.5" fill="#fb923c" opacity="0.8" />
-      </svg>
+    <div className="relative mx-auto w-full max-w-lg md:max-w-none" aria-hidden="true">
+      <div className="float-y absolute -left-3 top-10 z-10 hidden w-40 rounded-xl border border-line bg-[color:var(--card-solid)] p-3 shadow-card sm:block md:-left-8">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Course progress</p>
+        <p className="display mt-1 text-2xl">68%</p>
+        <div className="progress-bar mt-2"><span style={{ width: "68%" }} /></div>
+      </div>
+      <div className="float-y absolute -right-2 top-24 z-10 hidden w-44 rounded-xl border border-line bg-[color:var(--card-solid)] p-3 shadow-card sm:block md:-right-6" style={{ animationDelay: "0.6s" }}>
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Lesson</p>
+        <p className="mt-1 text-sm font-semibold leading-snug">New lesson unlocked</p>
+        <p className="mt-1 text-xs text-orange">Crypto Academy</p>
+      </div>
+      <div className="browser-frame relative z-[1]">
+        <div className="browser-chrome">
+          <span className="browser-dot" /><span className="browser-dot" /><span className="browser-dot" />
+          <span className="ml-3 truncate rounded-md border border-line bg-bg/40 px-2 py-0.5 text-[10px] text-muted">vatelife.com/app</span>
+        </div>
+        <div className="grid gap-3 bg-[color:var(--bg-elevated)] p-3 sm:p-4 md:grid-cols-[4.5rem_1fr]">
+          <div className="hidden flex-col gap-2 rounded-lg border border-line bg-[color:var(--card-solid)] p-2 md:flex">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className={`h-2 rounded-full ${i === 1 ? "bg-brand-gradient" : "bg-white/10"}`} />
+            ))}
+          </div>
+          <div className="grid gap-3">
+            <div className="rounded-lg border border-line bg-[color:var(--card-solid)] p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted">Continue learning</p>
+                  <p className="mt-1 text-sm font-semibold">Facebook Marketing</p>
+                </div>
+                <span className="rounded-md bg-brand-gradient px-2 py-1 text-[10px] font-bold text-white">Resume</span>
+              </div>
+              <div className="progress-bar mt-3"><span style={{ width: "42%" }} /></div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {["Referrals", "Balance", "Savings"].map((label, i) => (
+                <div key={label} className="rounded-lg border border-line bg-[color:var(--card-solid)] p-2">
+                  <p className="text-[9px] uppercase tracking-wide text-muted">{label}</p>
+                  <p className="display mt-1 text-sm sm:text-base">{i === 0 ? "12" : i === 1 ? "$84" : "$20"}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function FeatureMock({ kind }: { kind: "academy" | "tools" | "software" | "team" }) {
+  const rows =
+    kind === "academy"
+      ? ["Facebook Marketing", "Crypto Trading", "The AI Awakening"]
+      : kind === "tools"
+        ? ["Hook Generator", "Objection Crusher", "Team Growth Calculator"]
+        : kind === "software"
+          ? ["Marketing Wizard", "WhatsApp Cast", "Leads Catcher"]
+          : ["Powerline", "Pass-up", "Unilevel"];
+  return (
+    <div className="browser-frame" aria-hidden="true">
+      <div className="browser-chrome">
+        <span className="browser-dot" /><span className="browser-dot" /><span className="browser-dot" />
+      </div>
+      <div className="grid gap-2 bg-[color:var(--bg-elevated)] p-4">
+        {rows.map((title, index) => (
+          <div key={title} className="flex items-center gap-3 rounded-lg border border-line bg-[color:var(--card-solid)] px-3 py-2.5">
+            <IconTile seed={title} size="sm" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold">{title}</p>
+              {kind === "academy" ? <div className="progress-bar mt-1.5"><span style={{ width: `${35 + index * 18}%` }} /></div> : null}
+            </div>
+            <span className="text-muted">→</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 export function HubArt({ seed }: { seed: string }) {
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[1.5rem]" aria-hidden="true">
-      <div className="aurora opacity-70" />
-      <div className="absolute -right-6 -top-4 opacity-90">
+    <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[1.25rem]" aria-hidden="true">
+      <div className="absolute -right-4 -top-4 opacity-80">
         <IconTile seed={seed} size="lg" />
       </div>
-      <div className="absolute bottom-3 right-16 opacity-40 scale-75">
-        <IconTile seed={`${seed}-alt`} size="sm" />
-      </div>
-      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[color:var(--bg)] to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[color:var(--card-solid)] to-transparent" />
     </div>
   );
 }
@@ -114,11 +157,10 @@ export function ProgressRing({ value, max, label, id }: { value: number; max: nu
 
 export function EmptyState({ title, detail }: { title: string; detail?: string }) {
   return (
-    <div className="card grid place-items-center gap-3 px-6 py-10 text-center">
-      <div aria-hidden="true" className="relative">
-        <div className="aurora absolute inset-0 scale-150 opacity-60" />
-        <svg viewBox="0 0 120 90" className="relative h-20 w-28" role="img">
-          <rect x="18" y="22" width="84" height="52" rx="14" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.14)" />
+    <div className="card grid place-items-center gap-3 px-6 py-12 text-center">
+      <div aria-hidden="true">
+        <svg viewBox="0 0 120 90" className="h-20 w-28" role="img">
+          <rect x="18" y="22" width="84" height="52" rx="12" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" />
           <circle cx="60" cy="48" r="14" fill="url(#emptyOrb)" />
           <defs>
             <linearGradient id="emptyOrb" x1="0" y1="0" x2="1" y2="1">
@@ -136,7 +178,7 @@ export function EmptyState({ title, detail }: { title: string; detail?: string }
 
 export function KpiTile({ label, value, points, tone }: { label: string; value: React.ReactNode; points: number[]; tone?: "violet" | "orange" | "good" }) {
   return (
-    <article className="card card-interactive p-4">
+    <article className="card card-interactive p-5">
       <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">{label}</h2>
       <p className="display mt-2 text-2xl tabular-nums md:text-3xl">{value}</p>
       <Sparkline points={points} tone={tone} />
@@ -162,7 +204,7 @@ export function PlanCardShell({
   children?: React.ReactNode;
 }) {
   return (
-    <div className={`card card-interactive relative flex h-full flex-col gap-3 p-5 ${popular ? "shadow-glow ring-1 ring-orange/50" : ""}`}>
+    <div className={`card card-interactive relative flex h-full flex-col gap-3 p-6 ${popular ? "scale-[1.02] shadow-glow ring-1 ring-violet/40" : ""}`}>
       {popular ? (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand-gradient px-3 py-1 text-xs font-bold text-white">
           {popularLabel ?? "Most popular"}
@@ -174,6 +216,17 @@ export function PlanCardShell({
       <p className="text-sm text-muted">{detail}</p>
       {children}
       <span className={`btn mt-auto w-full ${popular ? "btn-primary" : "btn-ghost"}`}>{cta}</span>
+    </div>
+  );
+}
+
+export function CourseThumb({ seed, title }: { seed: string; title: string }) {
+  return (
+    <div className="relative aspect-[16/10] overflow-hidden rounded-lg border border-line bg-[color:var(--bg-elevated)]">
+      <div className="absolute inset-0 bg-gradient-to-br from-violet/30 via-transparent to-orange/25" />
+      <div className="absolute inset-0 grid place-items-center">
+        <IconTile seed={`${seed} ${title}`} size="lg" />
+      </div>
     </div>
   );
 }

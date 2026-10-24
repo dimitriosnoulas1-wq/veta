@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
-import { CaptchaFields, CardLink, DataTable, Grid, HiddenLocale, Notice, PageHead } from "@/components/ui";
+import { CaptchaFields, CardLink, CourseCard, DataTable, Grid, HiddenLocale, Notice, PageHead } from "@/components/ui";
 import { AnimatedCounter, CopyField, Countdown, LockNotice, TeamTree, TotpPanel, WithdrawCode } from "@/components/client";
 import { KpiTile, ProgressRing } from "@/components/graphics";
 import { YouTubeLite } from "@/components/media";
@@ -127,6 +127,17 @@ async function memberBody(locale: string, slug: string[], search: Record<string,
 
 async function Dashboard({ user, t }: { user: Member; t: T }) {
   const directs = await prisma.user.count({ where: { sponsorUsername: user.username } });
+  const continueCourse = await prisma.course.findFirst({
+    orderBy: { sort: "asc" },
+    include: {
+      lessons: { orderBy: { position: "asc" }, include: { progress: { where: { userId: user.id } } } },
+    },
+  });
+  const continueDone = continueCourse
+    ? continueCourse.lessons.filter((lesson) => lesson.progress.some((item) => item.completed)).length
+    : 0;
+  const continueTotal = continueCourse?.lessons.length ?? 0;
+  const continuePct = continueTotal ? Math.round((continueDone / continueTotal) * 100) : 0;
   const spark = (seed: number) => Array.from({ length: 8 }, (_, i) => Math.max(1, ((seed * (i + 3)) % 17) + i * 2));
   const tiles = [
     ["Direct Referrals", String(directs), spark(directs + 3), "violet" as const],
@@ -136,15 +147,57 @@ async function Dashboard({ user, t }: { user: Member; t: T }) {
     ["Pending Withdrawal", money(user.pendingWithdrawalCents), spark(user.pendingWithdrawalCents || 5), "orange" as const],
     ["Total Withdraws", money(user.totalWithdrawnCents), spark(user.totalWithdrawnCents || 19), "good" as const],
   ];
+  const quick = [
+    ["/app/leads", "Leads"],
+    ["/app/tools", "Smart Tools"],
+    ["/app/team", "My Team"],
+    ["/app/shop", "eShop"],
+    ["/app/inviting", "Inviting Tools"],
+    ["/app/support", "Support"],
+  ] as const;
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-6">
       <PageHead title="Dashboard" intro={`${t("welcome")}, ${user.firstName}`} crumbs={[{ label: "Dashboard" }]} />
-      <section className="card grid gap-2 p-5">
+      {continueCourse ? (
+        <section className="card grid gap-4 p-5 md:grid-cols-[14rem_1fr_auto] md:items-center">
+          <div className="overflow-hidden rounded-lg border border-line">
+            <div className="aspect-[16/10] bg-gradient-to-br from-violet/25 to-orange/20" />
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">{t("progress")}</p>
+            <h2 className="display mt-1 text-2xl">{continueCourse.title}</h2>
+            <p className="mt-1 text-sm text-muted">{t("progress")}: {continueDone} {t("of")} {continueTotal}</p>
+            <div className="progress-bar mt-3 max-w-md"><span style={{ width: `${continuePct}%` }} /></div>
+          </div>
+          <Link className="btn btn-primary w-fit" href={`/app/learn/${continueCourse.academy}/${continueCourse.id}`} prefetch>
+            {t("watch")}
+          </Link>
+        </section>
+      ) : null}
+      <section className="card grid gap-2 p-5 md:p-6">
         <h2 className="display text-3xl">{statusLine(user)}</h2>
         <p>{activeLine(user)}</p>
         <p className="text-sm text-muted">{t("activeHelp")}</p>
         <Countdown target={user.activeUntil?.toISOString() ?? ACTIVE_UNTIL} stamp={user.activeUntil ? formatEet(user.activeUntil) : "17/11/2026 06:29:40"} />
         <Link className="btn btn-primary w-fit" href="/app/upgrade" prefetch>Upgrade Higher</Link>
+      </section>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {tiles.map(([label, value, points, tone]) => (
+          <KpiTile
+            key={label as string}
+            label={label as string}
+            value={<AnimatedCounter value={String(value)} />}
+            points={points as number[]}
+            tone={tone as "violet" | "orange" | "good"}
+          />
+        ))}
+      </div>
+      <section className="grid gap-3">
+        <h2 className="display text-2xl">Dashboard</h2>
+        <Grid>
+          {quick.map(([href, title]) => <CardLink key={href} href={href} title={title} seed={title} action={t("open")} />)}
+          <CardLink href="/plan" title="Compensation Plan" seed="compensation" action={t("open")} />
+        </Grid>
       </section>
       <Notice>NEXT WAVE Positioning: {POSITIONING.paidPending} Paid-Pending Members, {POSITIONING.freeMembers} Free Members. {t("snapshot")}.</Notice>
       <div className="grid gap-3 md:grid-cols-2">
@@ -155,24 +208,12 @@ async function Dashboard({ user, t }: { user: Member; t: T }) {
         <a className="underline" href="https://t.me/VateLife">Join Our Telegram Channel</a>
         <a className="underline" href={NOTIFY_WHATSAPP}>Receive WhatsApp Free Notifications</a>
       </div>
-      <article className="card p-5">
+      <article className="card p-5 md:p-6">
         <h2 className="display text-2xl">Your Daily LIVE Meeting</h2>
         <p>Multi-Language Meetings</p>
         <p>{POSITIONING.dailyCall}</p>
         <a className="underline" href={POSITIONING.meet}>{POSITIONING.meet}</a>
       </article>
-      <Grid>
-        {tiles.map(([label, value, points, tone]) => (
-          <KpiTile
-            key={label as string}
-            label={label as string}
-            value={<AnimatedCounter value={String(value)} />}
-            points={points as number[]}
-            tone={tone as "violet" | "orange" | "good"}
-          />
-        ))}
-        <CardLink href="/plan" title="Compensation Plan" seed="compensation" action={t("open")} />
-      </Grid>
       <CardLink href="/app/coaching" title="Live Coaching Replays – Get Access" seed="coaching" action={t("open")} note={t("downloadMissing")} />
       <a className="underline" href={PLAY_STORE}>{PLAY_STORE}</a>
       <nav className="flex flex-wrap gap-3">{SOCIAL.map((item) => <a key={item.href} className="underline" href={item.href}>{item.label}</a>)}</nav>
@@ -541,7 +582,11 @@ async function Learn({ user, locale, t, parts, flash }: { user: Member; locale: 
   const academy = ACADEMIES.find((item) => item.id === parts[0]);
   if (!academy) return <PageHead title={t("missing")} crumbs={[{ href: "/app", label: "Dashboard" }, { label: t("missing") }]} />;
   if (!parts[1]) {
-    const courses = await prisma.course.findMany({ where: { academy: academy.id }, orderBy: { sort: "asc" } });
+    const courses = await prisma.course.findMany({
+      where: { academy: academy.id },
+      orderBy: { sort: "asc" },
+      include: { lessons: { include: { progress: { where: { userId: user.id } } } } },
+    });
     const groups: Array<[string, typeof courses]> = [
       ["", courses.filter((course) => course.access === "open")],
       ["EXCLUSIVE PRO COURSES", courses.filter((course) => course.access === "pro")],
@@ -549,24 +594,34 @@ async function Learn({ user, locale, t, parts, flash }: { user: Member; locale: 
       ["EXCLUSIVE VIP APPS", courses.filter((course) => course.access === "vip")],
     ];
     return (
-      <section className="grid gap-4">
+      <section className="grid gap-6">
         <PageHead title={academy.title} intro={academy.intro} crumbs={[{ href: "/app", label: "Dashboard" }, { label: academy.title }]} />
         {academy.headings.map((heading) => <h2 key={heading} className="serif text-2xl">{heading}</h2>)}
         {"videos" in academy ? academy.videos.map((video) => <article key={video.id} className="card p-4"><h2>{video.note}</h2><div className="mt-3"><YouTubeLite id={video.id} title={video.note} /></div></article>) : null}
         {groups.filter(([, rows]) => rows.length).map(([heading, rows]) => (
-          <div key={heading || "open"} className="grid gap-3">
+          <div key={heading || "open"} className="grid gap-4">
             {heading ? <h2 className="display text-2xl">{heading}</h2> : null}
-            <Grid>{rows.map((course) => (
-              <CardLink
-                key={course.id}
-                href={`/app/learn/${academy.id}/${course.id}`}
-                title={course.title}
-                seed={`${course.id} ${course.title} ${academy.title}`}
-                action={t("open")}
-                badge={course.access === "open" ? "Basic & above" : accessLabel(course.access as Access)}
-                note={`${course.modules} ${t("modules")}`}
-              />
-            ))}</Grid>
+            <Grid>{rows.map((course) => {
+              const done = course.lessons.filter((lesson) => lesson.progress.some((item) => item.completed)).length;
+              const total = course.lessons.length || course.modules || 1;
+              const locked = !canAccess(user.planCode, course.access as Access);
+              const badge = course.access === "open" ? "Basic & above" : accessLabel(course.access as Access);
+              return (
+                <CourseCard
+                  key={course.id}
+                  href={`/app/learn/${academy.id}/${course.id}`}
+                  title={course.title}
+                  seed={`${course.id} ${course.title} ${academy.title}`}
+                  modules={course.modules}
+                  modulesLabel={t("modules")}
+                  badge={badge}
+                  progress={Math.round((done / total) * 100)}
+                  progressLabel={t("progress")}
+                  locked={locked}
+                  action={t("open")}
+                />
+              );
+            })}</Grid>
           </div>
         ))}
         {academy.id === "digital-marketing" ? <Grid><CardLink href="/app/inviting/scripts" title="Inviting Scripts" seed="z1h" action={t("open")} /><CardLink href="/app/inviting/closing" title="Communication & Closing Scripts" seed="z1i" action={t("open")} /></Grid> : null}
@@ -578,27 +633,48 @@ async function Learn({ user, locale, t, parts, flash }: { user: Member; locale: 
   const access = (course.access === "pro" || course.access === "elite" || course.access === "vip" ? course.access : "open") as Access;
   const done = course.lessons.filter((lesson) => lesson.progress.some((item) => item.completed)).length;
   return (
-    <section className="grid gap-4">
+    <section className="grid gap-6">
       <PageHead title={course.title} intro={`${t("progress")}: ${done} ${t("of")} ${course.lessons.length}`} crumbs={[{ href: "/app", label: "Dashboard" }, { href: `/app/learn/${academy.id}`, label: academy.title }, { label: course.title }]} />
-      <div className="flex items-center gap-3">
-        <ProgressRing value={done} max={Math.max(course.lessons.length, 1)} label={`${t("progress")}: ${done} ${t("of")} ${course.lessons.length}`} id={`progress-${course.id}`} />
-        <p className="text-sm text-muted">{t("progress")}: {done} {t("of")} {course.lessons.length}</p>
-      </div>
       {flash}
-      <Gate user={user} access={access} t={t}>
-        {course.lessons.map((lesson) => (
-          <article key={lesson.id} className="card grid gap-3 p-4">
-            <h2 className="display text-2xl">{lesson.title}</h2>
-            {lesson.videoId ? <YouTubeLite id={lesson.videoId} title={lesson.title} /> : <p>{t("noVideo")}</p>}
-            <p>{lesson.note || t("empty")}</p>
-            <form action={toggleLesson}>
-              <HiddenLocale locale={locale} />
-              <input type="hidden" name="lessonId" value={lesson.id} />
-              <button className="btn btn-primary" type="submit">{lesson.progress.some((item) => item.completed) ? t("completed") : t("markComplete")}</button>
-            </form>
-          </article>
-        ))}
-      </Gate>
+      <div className="grid gap-6 lg:grid-cols-[1fr_16rem]">
+        <div className="grid gap-4">
+          <Gate user={user} access={access} t={t}>
+            {course.lessons.map((lesson) => (
+              <article key={lesson.id} className="card grid gap-3 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="display text-2xl">{lesson.title}</h2>
+                  {lesson.progress.some((item) => item.completed) ? <span className="rounded-md border border-good/40 px-2 py-0.5 text-xs font-semibold text-good">{t("completed")}</span> : null}
+                </div>
+                {lesson.videoId ? <YouTubeLite id={lesson.videoId} title={lesson.title} /> : <p>{t("noVideo")}</p>}
+                <p>{lesson.note || t("empty")}</p>
+                <form action={toggleLesson}>
+                  <HiddenLocale locale={locale} />
+                  <input type="hidden" name="lessonId" value={lesson.id} />
+                  <button className="btn btn-primary" type="submit">{lesson.progress.some((item) => item.completed) ? t("completed") : t("markComplete")}</button>
+                </form>
+              </article>
+            ))}
+          </Gate>
+        </div>
+        <aside className="card h-fit p-5 lg:sticky lg:top-24">
+          <div className="flex items-center gap-3">
+            <ProgressRing value={done} max={Math.max(course.lessons.length, 1)} label={`${t("progress")}: ${done} ${t("of")} ${course.lessons.length}`} id={`progress-${course.id}`} />
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-muted">{t("progress")}</p>
+              <p className="font-semibold">{done} {t("of")} {course.lessons.length}</p>
+            </div>
+          </div>
+          <div className="progress-bar mt-4"><span style={{ width: `${course.lessons.length ? Math.round((done / course.lessons.length) * 100) : 0}%` }} /></div>
+          <ol className="mt-5 grid gap-2">
+            {course.lessons.map((lesson, index) => (
+              <li key={lesson.id} className="flex items-start gap-2 text-sm">
+                <span className={`mt-0.5 size-5 shrink-0 rounded-full border text-center text-[10px] font-bold leading-5 ${lesson.progress.some((item) => item.completed) ? "border-good bg-good/20 text-good" : "border-line text-muted"}`}>{index + 1}</span>
+                <span className={lesson.progress.some((item) => item.completed) ? "text-muted line-through" : ""}>{lesson.title}</span>
+              </li>
+            ))}
+          </ol>
+        </aside>
+      </div>
     </section>
   );
 }
