@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { NAV } from "@/content/catalog";
 import { renderMember } from "@/views/member";
 
+export const dynamic = "force-dynamic";
+
 export function generateMetadata({ params }: { params: { slug?: string[] } }): Metadata {
   const path = `/${["app", ...(params.slug ?? [])].join("/")}`;
   const match = [...NAV].reverse().find((item) => path === item.href || path.startsWith(`${item.href}/`));

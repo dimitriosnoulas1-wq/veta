@@ -1,8 +1,9 @@
 import { getTranslations } from "next-intl/server";
 import type { Session } from "next-auth";
 import { Link } from "@/i18n/routing";
-import { CaptchaFields, CardLink, DataTable, Grid, HiddenLocale, Mark, Notice, PageHead } from "@/components/ui";
+import { CaptchaFields, CardLink, DataTable, Grid, HiddenLocale, Notice, PageHead } from "@/components/ui";
 import { Countdown, HeroDecor, LoginForm } from "@/components/client";
+import { HeroArt, PlanCardShell } from "@/components/graphics";
 import { PublicChrome } from "@/components/shell";
 import { ADDRESS, NOTIFY_WHATSAPP, PLAY_STORE, POSITIONING, RANKS, SOCIAL, SUPPORT_WHATSAPP, ACTIVE_UNTIL } from "@/content/catalog";
 import { flashText, getPlans, getProducts } from "@/lib/data";
@@ -129,30 +130,33 @@ function Home({ t }: { t: Awaited<ReturnType<typeof getTranslations>> }) {
     ["Live Coaches", "/app/coaching"],
   ];
   return (
-    <div className="grid gap-8">
-      <section className="grid items-center gap-6 rounded-3xl bg-plum px-6 py-8 text-[#fff8f1] md:grid-cols-[1fr_auto] md:px-10">
-        <div>
-          <p className="text-[#ffd7a8]">VateLife</p>
-          <h1 className="serif text-4xl md:text-6xl">Empowering Your Success</h1>
-          <p className="mt-3 max-w-xl text-[#f6ede6]">{t("rangeNote")}</p>
-          <Link className="btn btn-primary mt-5" href="/app">Dashboard</Link>
+    <div className="grid gap-10">
+      <section className="relative overflow-hidden rounded-[1.75rem] border border-line bg-[color:var(--glass)] px-6 py-10 text-[#fff8f1] shadow-card backdrop-blur-xl md:grid md:grid-cols-[1.1fr_0.9fr] md:items-center md:gap-8 md:px-10 md:py-14">
+        <div className="aurora opacity-80" aria-hidden="true" />
+        <div className="relative z-[1]">
+          <p className="display text-sm uppercase tracking-[0.22em] text-[#ffd7a8]">VateLife</p>
+          <h1 className="display mt-3 text-4xl md:text-6xl">Empowering Your Success</h1>
+          <p className="mt-4 max-w-xl text-base text-[#f6ede6]/90 md:text-lg">{t("rangeNote")}</p>
+          <Link className="btn btn-primary mt-6" href="/app" prefetch>Dashboard</Link>
         </div>
-        <HeroDecor><Mark seed="home-hero" /></HeroDecor>
+        <HeroDecor>
+          <HeroArt />
+        </HeroDecor>
       </section>
       <section className="grid gap-4">
-        <h2 className="serif text-3xl">WHAT DO YOU GET with Your Membership</h2>
+        <h2 className="display text-3xl">WHAT DO YOU GET with Your Membership</h2>
         <Grid>
           {cards.map(([title, href]) => <CardLink key={title} href={href} title={title} seed={title} action={t("open")} />)}
         </Grid>
       </section>
-      <section className="card p-6">
-        <h2 className="serif text-3xl">The VateLife Story</h2>
-        <p className="mt-2">{t("storyMissing")}</p>
+      <section className="card p-6 md:p-8">
+        <h2 className="display text-3xl">The VateLife Story</h2>
+        <p className="mt-2 text-muted">{t("storyMissing")}</p>
         <a className="btn btn-plum mt-4" href={PLAY_STORE}>{t("external")}</a>
       </section>
-      <section className="card p-6">
-        <h2 className="serif text-3xl">Testimonials</h2>
-        <p className="mt-2">{t("quotesMissing")}</p>
+      <section className="card p-6 md:p-8">
+        <h2 className="display text-3xl">Testimonials</h2>
+        <p className="mt-2 text-muted">{t("quotesMissing")}</p>
       </section>
       <nav className="flex flex-wrap gap-3">
         {SOCIAL.map((item) => <a key={item.href} className="underline" href={item.href}>{item.label}</a>)}
@@ -200,8 +204,25 @@ async function Pricing({ t, n, flash }: { t: Awaited<ReturnType<typeof getTransl
           </tbody>
         </table>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {plans.map((plan) => <Link key={plan.code} className="btn btn-primary" href={`/app/upgrade?plan=${plan.code}`}>{t("choose")} {plan.name}</Link>)}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {plans.map((plan) => {
+          const price = plan.interval === "year"
+            ? `${money(plan.recurringCents)} ${t("annually")}`
+            : `${money(plan.enrollmentCents)} ${t("oneTime")} + ${money(plan.recurringCents)} ${t("monthly")}`;
+          const popular = plan.code === "PRO";
+          return (
+            <Link key={plan.code} href={`/app/upgrade?plan=${plan.code}`} className="no-underline" prefetch>
+              <PlanCardShell
+                name={plan.name}
+                price={price}
+                detail={`${plan.leads} leads · ${plan.impressions.toLocaleString("en-US")} impressions`}
+                cta={`${t("choose")} ${plan.name}`}
+                popular={popular}
+                popularLabel="Most popular"
+              />
+            </Link>
+          );
+        })}
       </div>
       <p className="text-sm text-muted">{t("planKept")}</p>
       <p className="text-sm">{t("metaNote")}</p>

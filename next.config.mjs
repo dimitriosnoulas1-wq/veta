@@ -7,6 +7,9 @@ const nextConfig = {
   images: {
     remotePatterns: [{ protocol: "https", hostname: "i.ytimg.com" }],
   },
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
 };
 
 export default withNextIntl(nextConfig);

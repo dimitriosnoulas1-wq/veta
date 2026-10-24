@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { currentSession } from "@/lib/data";
 import { renderPublic } from "@/views/public";
 
+export const revalidate = 60;
+
 const titles: Record<string, string> = {
   pricing: "Pricing",
   plan: "Compensation plan",

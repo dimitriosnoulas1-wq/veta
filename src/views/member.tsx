@@ -1,7 +1,9 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { CaptchaFields, CardLink, DataTable, Grid, HiddenLocale, Notice, PageHead } from "@/components/ui";
-import { CopyField, Countdown, LockNotice, TeamTree, TotpPanel, WithdrawCode } from "@/components/client";
+import { AnimatedCounter, CopyField, Countdown, LockNotice, TeamTree, TotpPanel, WithdrawCode } from "@/components/client";
+import { KpiTile, ProgressRing } from "@/components/graphics";
+import { YouTubeLite } from "@/components/media";
 import { MemberChrome } from "@/components/shell";
 import { ACADEMIES, AD_PACKS, BOXOKO, BRIDGE_STEPS, CHAT_STRATEGIES, EMAIL_PROVIDERS, EMAIL_SEQUENCES, GLOBAL_LEAD_TOTAL, INVITE_CHANNELS, INVITE_PHASES, LEAD_LEGEND, MESSENGERS, NOTIFICATION_KEYS, NOTIFY_WHATSAPP, PLAY_STORE, POSITIONING, REFERRAL_LEGEND, REPLAY_CENTS, SOCIAL, SPONSOR, SUPPORT_WHATSAPP, TOOL_GROUPS, TRAININGS, TRAFFIC, VERIFIERS, WITHDRAW_FEE_CENTS, ACTIVE_UNTIL } from "@/content/catalog";
 import { accessLabel, canAccess, requiredPlan, type Access } from "@/lib/access";
@@ -125,23 +127,24 @@ async function memberBody(locale: string, slug: string[], search: Record<string,
 
 async function Dashboard({ user, t }: { user: Member; t: T }) {
   const directs = await prisma.user.count({ where: { sponsorUsername: user.username } });
+  const spark = (seed: number) => Array.from({ length: 8 }, (_, i) => Math.max(1, ((seed * (i + 3)) % 17) + i * 2));
   const tiles = [
-    [t("from") === "Από" ? "Direct Referrals" : "Direct Referrals", String(directs)],
-    ["Account Balance", money(user.balanceCents)],
-    ["Total Savings", money(user.savingsCents)],
-    ["Shopping Balance", money(user.shoppingBalanceCents)],
-    ["Pending Withdrawal", money(user.pendingWithdrawalCents)],
-    ["Total Withdraws", money(user.totalWithdrawnCents)],
+    ["Direct Referrals", String(directs), spark(directs + 3), "violet" as const],
+    ["Account Balance", money(user.balanceCents), spark(user.balanceCents || 11), "orange" as const],
+    ["Total Savings", money(user.savingsCents), spark(user.savingsCents || 7), "good" as const],
+    ["Shopping Balance", money(user.shoppingBalanceCents), spark(user.shoppingBalanceCents || 13), "violet" as const],
+    ["Pending Withdrawal", money(user.pendingWithdrawalCents), spark(user.pendingWithdrawalCents || 5), "orange" as const],
+    ["Total Withdraws", money(user.totalWithdrawnCents), spark(user.totalWithdrawnCents || 19), "good" as const],
   ];
   return (
     <div className="grid gap-4">
       <PageHead title="Dashboard" intro={`${t("welcome")}, ${user.firstName}`} crumbs={[{ label: "Dashboard" }]} />
       <section className="card grid gap-2 p-5">
-        <h2 className="serif text-3xl">{statusLine(user)}</h2>
+        <h2 className="display text-3xl">{statusLine(user)}</h2>
         <p>{activeLine(user)}</p>
         <p className="text-sm text-muted">{t("activeHelp")}</p>
         <Countdown target={user.activeUntil?.toISOString() ?? ACTIVE_UNTIL} stamp={user.activeUntil ? formatEet(user.activeUntil) : "17/11/2026 06:29:40"} />
-        <Link className="btn btn-primary w-fit" href="/app/upgrade">Upgrade Higher</Link>
+        <Link className="btn btn-primary w-fit" href="/app/upgrade" prefetch>Upgrade Higher</Link>
       </section>
       <Notice>NEXT WAVE Positioning: {POSITIONING.paidPending} Paid-Pending Members, {POSITIONING.freeMembers} Free Members. {t("snapshot")}.</Notice>
       <div className="grid gap-3 md:grid-cols-2">
@@ -153,13 +156,21 @@ async function Dashboard({ user, t }: { user: Member; t: T }) {
         <a className="underline" href={NOTIFY_WHATSAPP}>Receive WhatsApp Free Notifications</a>
       </div>
       <article className="card p-5">
-        <h2 className="serif text-2xl">Your Daily LIVE Meeting</h2>
+        <h2 className="display text-2xl">Your Daily LIVE Meeting</h2>
         <p>Multi-Language Meetings</p>
         <p>{POSITIONING.dailyCall}</p>
         <a className="underline" href={POSITIONING.meet}>{POSITIONING.meet}</a>
       </article>
       <Grid>
-        {tiles.map(([label, value]) => <article key={label} className="card p-4"><h2 className="text-sm">{label}</h2><p className="serif text-3xl">{value}</p></article>)}
+        {tiles.map(([label, value, points, tone]) => (
+          <KpiTile
+            key={label as string}
+            label={label as string}
+            value={<AnimatedCounter value={String(value)} />}
+            points={points as number[]}
+            tone={tone as "violet" | "orange" | "good"}
+          />
+        ))}
         <CardLink href="/plan" title="Compensation Plan" seed="compensation" action={t("open")} />
       </Grid>
       <CardLink href="/app/coaching" title="Live Coaching Replays – Get Access" seed="coaching" action={t("open")} note={t("downloadMissing")} />
@@ -541,11 +552,21 @@ async function Learn({ user, locale, t, parts, flash }: { user: Member; locale: 
       <section className="grid gap-4">
         <PageHead title={academy.title} intro={academy.intro} crumbs={[{ href: "/app", label: "Dashboard" }, { label: academy.title }]} />
         {academy.headings.map((heading) => <h2 key={heading} className="serif text-2xl">{heading}</h2>)}
-        {"videos" in academy ? academy.videos.map((video) => <article key={video.id} className="card p-4"><h2>{video.note}</h2><iframe className="mt-3 aspect-video w-full rounded-2xl" src={`https://www.youtube-nocookie.com/embed/${video.id}`} title={video.note} allowFullScreen /></article>) : null}
+        {"videos" in academy ? academy.videos.map((video) => <article key={video.id} className="card p-4"><h2>{video.note}</h2><div className="mt-3"><YouTubeLite id={video.id} title={video.note} /></div></article>) : null}
         {groups.filter(([, rows]) => rows.length).map(([heading, rows]) => (
           <div key={heading || "open"} className="grid gap-3">
-            {heading ? <h2 className="serif text-2xl">{heading}</h2> : null}
-            <Grid>{rows.map((course) => <CardLink key={course.id} href={`/app/learn/${academy.id}/${course.id}`} title={course.title} seed={course.id} action={t("open")} badge={course.access === "open" ? "Basic & above" : accessLabel(course.access as Access)} note={`${course.modules} ${t("modules")}`} />)}</Grid>
+            {heading ? <h2 className="display text-2xl">{heading}</h2> : null}
+            <Grid>{rows.map((course) => (
+              <CardLink
+                key={course.id}
+                href={`/app/learn/${academy.id}/${course.id}`}
+                title={course.title}
+                seed={`${course.id} ${course.title} ${academy.title}`}
+                action={t("open")}
+                badge={course.access === "open" ? "Basic & above" : accessLabel(course.access as Access)}
+                note={`${course.modules} ${t("modules")}`}
+              />
+            ))}</Grid>
           </div>
         ))}
         {academy.id === "digital-marketing" ? <Grid><CardLink href="/app/inviting/scripts" title="Inviting Scripts" seed="z1h" action={t("open")} /><CardLink href="/app/inviting/closing" title="Communication & Closing Scripts" seed="z1i" action={t("open")} /></Grid> : null}
@@ -559,12 +580,16 @@ async function Learn({ user, locale, t, parts, flash }: { user: Member; locale: 
   return (
     <section className="grid gap-4">
       <PageHead title={course.title} intro={`${t("progress")}: ${done} ${t("of")} ${course.lessons.length}`} crumbs={[{ href: "/app", label: "Dashboard" }, { href: `/app/learn/${academy.id}`, label: academy.title }, { label: course.title }]} />
+      <div className="flex items-center gap-3">
+        <ProgressRing value={done} max={Math.max(course.lessons.length, 1)} label={`${t("progress")}: ${done} ${t("of")} ${course.lessons.length}`} id={`progress-${course.id}`} />
+        <p className="text-sm text-muted">{t("progress")}: {done} {t("of")} {course.lessons.length}</p>
+      </div>
       {flash}
       <Gate user={user} access={access} t={t}>
         {course.lessons.map((lesson) => (
           <article key={lesson.id} className="card grid gap-3 p-4">
-            <h2 className="serif text-2xl">{lesson.title}</h2>
-            {lesson.videoId ? <iframe className="aspect-video w-full rounded-2xl" src={`https://www.youtube-nocookie.com/embed/${lesson.videoId}`} title={lesson.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /> : <p>{t("noVideo")}</p>}
+            <h2 className="display text-2xl">{lesson.title}</h2>
+            {lesson.videoId ? <YouTubeLite id={lesson.videoId} title={lesson.title} /> : <p>{t("noVideo")}</p>}
             <p>{lesson.note || t("empty")}</p>
             <form action={toggleLesson}>
               <HiddenLocale locale={locale} />
@@ -605,7 +630,7 @@ function Trainings({ user, t }: { user: Member; t: T }) {
         {TRAININGS.map((video, index) => (
           <article key={video.id} className="card p-4">
             <h2 className="serif text-2xl">Replay {index + 1}{video.note ? ` · ${video.note}` : ""}</h2>
-            <iframe className="mt-3 aspect-video w-full rounded-2xl" src={`https://www.youtube-nocookie.com/embed/${video.id}`} title={`Replay ${index + 1}`} allowFullScreen />
+            <div className="mt-3"><YouTubeLite id={video.id} title={`Replay ${index + 1}`} /></div>
           </article>
         ))}
       </Gate>
@@ -634,7 +659,7 @@ function Tool({ user, t, id }: { user: Member; t: T; id: string }) {
     <section className="grid gap-4">
       <PageHead title={tool.title} crumbs={[{ href: "/app", label: "Dashboard" }, { href: "/app/tools", label: "Smart Tools" }, { label: tool.title }]} />
       <Gate user={user} access="open" t={t}>
-        {tool.videos?.map((video) => <iframe key={video} className="aspect-video w-full rounded-2xl" src={`https://www.youtube-nocookie.com/embed/${video}`} title={tool.title} allowFullScreen />)}
+        {tool.videos?.map((video) => <YouTubeLite key={video} id={video} title={tool.title} />)}
         {tool.href ? <a className="underline" href={tool.href}>{t("external")}</a> : null}
         <p>{t("empty")}</p>
       </Gate>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { renderAdmin } from "@/views/admin";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Admin" };
 
 export default function Page({

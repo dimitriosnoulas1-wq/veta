@@ -1,20 +1,11 @@
 import { Link } from "@/i18n/routing";
 import { createCaptcha } from "@/lib/captcha";
+import { IconTile } from "@/components/icons";
+import { EmptyState, HubArt } from "@/components/graphics";
 
+/** @deprecated Prefer IconTile — kept for call sites that still import Mark. */
 export function Mark({ seed }: { seed: string }) {
-  let hash = 0;
-  for (const char of seed) hash = (hash * 33 + char.charCodeAt(0)) >>> 0;
-  const fills = ["#3b1d38", "#8a3b00", "#1f4d3a", "#1e3a5f", "#6b2d3c", "#3f3a1e"];
-  const fill = fills[hash % fills.length];
-  const letter = (seed.replace(/[^a-z0-9]/gi, "")[0] ?? "V").toUpperCase();
-  const dots = [0, 1, 2, 3].filter((bit) => (hash >> bit) & 1);
-  return (
-    <svg viewBox="0 0 80 80" className="h-16 w-16" role="img" aria-hidden="true">
-      <rect width="80" height="80" rx="18" fill={fill} />
-      <text x="40" y="48" textAnchor="middle" fontSize="28" fontFamily="serif" fill="#fff8f1">{letter}</text>
-      {dots.map((dot) => <circle key={dot} cx={18 + dot * 15} cy="66" r="3" fill="#fff8f1" />)}
-    </svg>
-  );
+  return <IconTile seed={seed} size="lg" />;
 }
 
 export function Crumbs({ items }: { items: Array<{ href?: string; label: string }> }) {
@@ -24,7 +15,7 @@ export function Crumbs({ items }: { items: Array<{ href?: string; label: string 
         {items.map((item, index) => (
           <li key={`${item.label}-${index}`} className="flex items-center gap-2">
             {index > 0 ? <span aria-hidden="true">/</span> : null}
-            {item.href ? <Link href={item.href} className="underline">{item.label}</Link> : <span className="text-[#fff8f1]">{item.label}</span>}
+            {item.href ? <Link href={item.href} className="underline decoration-white/30 underline-offset-4 hover:decoration-orange" prefetch>{item.label}</Link> : <span className="text-[#fff8f1]">{item.label}</span>}
           </li>
         ))}
       </ol>
@@ -34,35 +25,50 @@ export function Crumbs({ items }: { items: Array<{ href?: string; label: string 
 
 export function PageHead({ title, intro, crumbs }: { title: string; intro?: string; crumbs: Array<{ href?: string; label: string }> }) {
   return (
-    <header className="rounded-3xl bg-plum px-5 py-6 md:px-8 md:py-8">
-      <Crumbs items={crumbs} />
-      <h1 className="serif mt-3 text-3xl text-[#fff8f1] md:text-5xl">{title}</h1>
-      {intro ? <p className="mt-3 max-w-3xl text-[#f6ede6]">{intro}</p> : null}
+    <header className="relative overflow-hidden rounded-[1.5rem] border border-line bg-[color:var(--glass)] px-5 py-7 shadow-card backdrop-blur-xl md:px-8 md:py-9">
+      <HubArt seed={title} />
+      <div className="relative z-[1] max-w-3xl">
+        <Crumbs items={crumbs} />
+        <h1 className="display mt-3 text-3xl text-[#fff8f1] md:text-5xl">{title}</h1>
+        {intro ? <p className="mt-3 max-w-3xl text-[#f6ede6]/90">{intro}</p> : null}
+      </div>
     </header>
   );
 }
 
 export function CardLink({ href, title, seed, action, note, badge }: { href: string; title: string; seed: string; action: string; note?: string; badge?: string }) {
   return (
-    <Link href={href} className="card flex h-full flex-col gap-4 p-5 no-underline">
-      <Mark seed={seed} />
-      {badge ? <span className="w-fit rounded-full bg-plum px-3 py-1 text-sm font-semibold text-[#fff8f1]">{badge}</span> : null}
-      <h2 className="serif text-2xl text-ink">{title}</h2>
-      {note ? <p className="text-muted">{note}</p> : null}
-      <span className="btn btn-primary mt-auto w-fit">{action}</span>
+    <Link
+      href={href}
+      prefetch
+      className="card card-interactive group flex h-full flex-col gap-2.5 p-3.5 no-underline sm:p-4"
+      aria-label={`${title}. ${action}`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <IconTile seed={`${seed} ${title}`} size="sm" />
+        {badge ? <span className="rounded-full border border-line bg-white/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#ffd7a8]">{badge}</span> : null}
+      </div>
+      <h2 className="display text-base leading-snug text-ink sm:text-lg">{title}</h2>
+      {note ? <p className="line-clamp-2 text-xs text-muted sm:text-sm">{note}</p> : null}
+      <span className="mt-auto pt-1 text-xs font-semibold text-orange opacity-90 transition group-hover:opacity-100">{action} →</span>
     </Link>
   );
 }
 
 export function Grid({ children }: { children: React.ReactNode }) {
-  return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{children}</div>;
+  return <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">{children}</div>;
 }
 
 export function Notice({ children }: { children: React.ReactNode }) {
-  return <p className="rounded-2xl border border-line bg-card px-4 py-3 text-ink">{children}</p>;
+  const text = typeof children === "string" ? children : null;
+  if (text && /empty|no |missing|none|δεν|geen/i.test(text) && text.length < 120) {
+    return <EmptyState title={text} />;
+  }
+  return <p className="rounded-2xl border border-line bg-[color:var(--glass)] px-4 py-3 text-ink backdrop-blur-md">{children}</p>;
 }
 
 export function DataTable({ columns, rows, empty }: { columns: string[]; rows: string[][]; empty: string }) {
+  if (!rows.length) return <EmptyState title={empty} />;
   return (
     <div className="table-wrap">
       <table>
@@ -70,11 +76,9 @@ export function DataTable({ columns, rows, empty }: { columns: string[]; rows: s
           <tr>{columns.map((column) => <th key={column} scope="col">{column}</th>)}</tr>
         </thead>
         <tbody>
-          {rows.length ? rows.map((row, index) => (
+          {rows.map((row, index) => (
             <tr key={index}>{row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}</tr>
-          )) : (
-            <tr><td colSpan={columns.length}>{empty}</td></tr>
-          )}
+          ))}
         </tbody>
       </table>
     </div>

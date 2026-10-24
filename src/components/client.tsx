@@ -4,28 +4,27 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { useFormState } from "react-dom";
 import { signIn } from "next-auth/react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { motion, useReducedMotion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { beginTotp, confirmTotp, disableTotp, makeWithdrawCode } from "@/lib/actions";
 
 export function ThemeButton() {
   const t = useTranslations("chrome");
-  const [dark, setDark] = useState(false);
-  useEffect(() => setDark(document.documentElement.classList.contains("dark")), []);
+  const [light, setLight] = useState(false);
+  useEffect(() => setLight(document.documentElement.classList.contains("light")), []);
   return (
     <button
       type="button"
       className="btn btn-ghost"
       aria-label={t("theme")}
       onClick={() => {
-        const next = !document.documentElement.classList.contains("dark");
-        document.documentElement.classList.toggle("dark", next);
-        localStorage.setItem("theme", next ? "dark" : "light");
-        setDark(next);
+        const next = !document.documentElement.classList.contains("light");
+        document.documentElement.classList.toggle("light", next);
+        localStorage.setItem("theme", next ? "light" : "dark");
+        setLight(next);
       }}
     >
-      {dark ? t("light") : t("dark")}
+      {light ? t("dark") : t("light")}
     </button>
   );
 }
@@ -73,9 +72,45 @@ export function Countdown({ target, stamp = "17/11/2026 06:29:40" }: { target: s
   return (
     <div>
       <p className="text-sm text-muted">{t("countdownTo")} {stamp} EET</p>
-      {text ? <p className="serif text-4xl">{text}</p> : <div className="skeleton mt-2 h-10 w-72" />}
+      {text ? <p className="display text-4xl tabular-nums">{text}</p> : <div className="skeleton mt-2 h-10 w-72" />}
     </div>
   );
+}
+
+export function AnimatedCounter({ value }: { value: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const numeric = value.replace(/[^0-9.-]/g, "");
+    const target = Number(numeric);
+    if (!Number.isFinite(target) || Math.abs(target) > 1_000_000) {
+      node.textContent = value;
+      return;
+    }
+    const prefix = value.slice(0, value.indexOf(numeric));
+    const suffix = value.slice(value.indexOf(numeric) + numeric.length);
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      node.textContent = value;
+      return;
+    }
+    const start = performance.now();
+    const duration = 700;
+    const from = 0;
+    let frame = 0;
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const current = from + (target - from) * eased;
+      const decimals = numeric.includes(".") ? (numeric.split(".")[1]?.length ?? 0) : 0;
+      node.textContent = `${prefix}${current.toFixed(decimals)}${suffix}`;
+      if (p < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [value]);
+  return <span ref={ref}>{value}</span>;
 }
 
 export function LockNotice({ label, detail, href, action, close }: { label: string; detail: string; href: string; action: string; close: string }) {
@@ -87,12 +122,12 @@ export function LockNotice({ label, detail, href, action, close }: { label: stri
         <Dialog.Trigger className="btn btn-primary w-fit">{action}</Dialog.Trigger>
       </div>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(32rem,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-card p-6 text-ink">
-          <Dialog.Title className="serif text-3xl">{label}</Dialog.Title>
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(32rem,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-line bg-[color:var(--card-solid)] p-6 text-ink shadow-glow">
+          <Dialog.Title className="display text-3xl">{label}</Dialog.Title>
           <p className="mt-3">{detail}</p>
           <div className="mt-5 flex flex-wrap gap-2">
-            <Link className="btn btn-primary" href={href}>{action}</Link>
+            <Link className="btn btn-primary" href={href} prefetch>{action}</Link>
             <Dialog.Close className="btn btn-ghost">{close}</Dialog.Close>
           </div>
         </Dialog.Content>
@@ -155,7 +190,7 @@ export function LoginForm({ registered, callbackUrl }: { registered: boolean; ca
   }
   return (
     <div className="grid gap-6">
-      {registered ? <p className="rounded-2xl bg-card p-4">{t("registered")}</p> : null}
+      {registered ? <p className="rounded-2xl border border-line bg-[color:var(--glass)] p-4 backdrop-blur-md">{t("registered")}</p> : null}
       <form className="card grid gap-3 p-5" onSubmit={onPassword} autoComplete="off">
         <label className="field"><span>{t("email")}</span><input name="email" type="email" autoComplete="off" required /></label>
         <label className="field"><span>{t("password")}</span><input name="password" type="password" autoComplete="new-password" required /></label>
@@ -228,12 +263,7 @@ export function WithdrawCode() {
   );
 }
 
+/** Lightweight CSS float — replaces framer-motion HeroDecor. */
 export function HeroDecor({ children }: { children: React.ReactNode }) {
-  const reduce = useReducedMotion();
-  if (reduce) return <div>{children}</div>;
-  return (
-    <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-      {children}
-    </motion.div>
-  );
+  return <div className="float-y">{children}</div>;
 }
