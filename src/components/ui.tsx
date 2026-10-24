@@ -1,7 +1,7 @@
 import { Link } from "@/i18n/routing";
 import { createCaptcha } from "@/lib/captcha";
 import { IconTile } from "@/components/icons";
-import { CourseThumb, EmptyState, HubArt } from "@/components/graphics";
+import { CourseThumb, EmptyState } from "@/components/graphics";
 
 /** @deprecated Prefer IconTile — kept for call sites that still import Mark. */
 export function Mark({ seed }: { seed: string }) {
@@ -25,12 +25,16 @@ export function Crumbs({ items }: { items: Array<{ href?: string; label: string 
 
 export function PageHead({ title, intro, crumbs }: { title: string; intro?: string; crumbs: Array<{ href?: string; label: string }> }) {
   return (
-    <header className="relative overflow-hidden rounded-[1.25rem] border border-line bg-[color:var(--card-solid)] px-5 py-6 md:px-8 md:py-8">
-      <HubArt seed={title} />
+    <header className="relative border-b border-line pb-6 md:pb-8">
       <div className="relative z-[1] max-w-3xl">
         <Crumbs items={crumbs} />
-        <h1 className="display mt-3 text-3xl text-ink md:text-4xl lg:text-[2.75rem]">{title}</h1>
-        {intro ? <p className="mt-3 max-w-2xl text-base text-muted md:text-lg">{intro}</p> : null}
+        <div className="mt-3 flex items-start gap-3">
+          <span className="mt-1 hidden sm:inline-flex"><IconTile seed={title} size="sm" /></span>
+          <div>
+            <h1 className="display text-3xl text-ink md:text-4xl lg:text-[2.75rem]">{title}</h1>
+            {intro ? <p className="mt-3 max-w-2xl text-base text-muted md:text-lg">{intro}</p> : null}
+          </div>
+        </div>
       </div>
     </header>
   );
@@ -108,7 +112,7 @@ export function CourseCard({
 }
 
 export function Grid({ children }: { children: React.ReactNode }) {
-  return <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{children}</div>;
+  return <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">{children}</div>;
 }
 
 export function Notice({ children }: { children: React.ReactNode }) {
@@ -168,5 +172,5 @@ export function PayMethods({ balance, crypto }: { balance: string; crypto: strin
 }
 
 export function Reveal({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`reveal is-in ${className}`}>{children}</div>;
+  return <div className={className}>{children}</div>;
 }

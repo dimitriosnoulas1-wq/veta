@@ -277,6 +277,27 @@ td {
   white-space: nowrap;
 }
 
+@media (max-width: 767px) {
+  th,
+  td {
+    white-space: normal;
+    word-break: break-word;
+    min-width: 5.5rem;
+    padding: 0.65rem 0.7rem;
+    font-size: 0.85rem;
+  }
+
+  th:first-child,
+  td:first-child,
+  th[scope="row"] {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--card-solid);
+    min-width: 7rem;
+  }
+}
+
 th {
   color: var(--muted);
   font-size: 0.75rem;
@@ -327,14 +348,13 @@ tr:last-child td {
   -webkit-backdrop-filter: blur(18px) saturate(150%);
 }
 
-.reveal {
-  opacity: 0;
-  transform: translateY(16px);
-  transition: opacity 500ms ease, transform 500ms ease;
+.reveal-lift {
+  opacity: 1;
+  transform: translateY(10px);
+  transition: transform 480ms ease, opacity 480ms ease;
 }
 
-.reveal.is-in {
-  opacity: 1;
+.reveal-lift.is-seen {
   transform: none;
 }
 
@@ -429,7 +449,7 @@ tr:last-child td {
   .card-interactive:hover {
     transform: none;
   }
-  .reveal {
+  .reveal-lift {
     opacity: 1;
     transform: none;
   }

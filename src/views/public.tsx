@@ -111,7 +111,7 @@ async function publicBody(locale: string, slug: string[], search: Record<string,
   if (page === "terms") return <Terms t={t} n={n} />;
   if (page === "privacy") return <Privacy t={t} n={n} />;
   if (page === "register") return <Register t={t} n={n} locale={locale} flash={flash} />;
-  if (page === "login") return <section className="grid gap-4"><PageHead title={n("login")} crumbs={[{ href: "/", label: n("home") }, { label: n("login") }]} />{flash}<LoginForm registered={q(search.m) === "registered"} callbackUrl={safeCallback(locale, q(search.callbackUrl))} /></section>;
+  if (page === "login") return <section className="mx-auto grid w-full max-w-lg gap-4"><PageHead title={n("login")} crumbs={[{ href: "/", label: n("home") }, { label: n("login") }]} />{flash}<LoginForm registered={q(search.m) === "registered"} callbackUrl={safeCallback(locale, q(search.callbackUrl))} /></section>;
   if (page === "faq" || page === "news" || page === "articles" || page === "calendar") return <Library locale={locale} kind={page} query={q(search.q)} />;
   return <PageHead title={t("missing")} crumbs={[{ href: "/", label: n("home") }, { label: t("missing") }]} />;
 }
@@ -299,12 +299,34 @@ async function Pricing({ t, n, flash }: { t: Awaited<ReturnType<typeof getTransl
   const plans = await getPlans();
   const yn = (value: boolean) => (value ? t("yes") : t("no"));
   return (
-    <section className="grid gap-4">
+    <section className="grid gap-8">
       <PageHead title={n("pricing")} intro={t("rangeNote")} crumbs={[{ href: "/", label: n("home") }, { label: n("pricing") }]} />
       {flash}
-      <Notice>{t("renewalNote")}</Notice>
-      <Notice>{t("replayNote")}</Notice>
-      <Notice>{t("noIncome")}</Notice>
+      <div className="grid gap-3">
+        <Notice>{t("renewalNote")}</Notice>
+        <Notice>{t("replayNote")}</Notice>
+        <Notice>{t("noIncome")}</Notice>
+      </div>
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        {plans.map((plan) => {
+          const price = plan.interval === "year"
+            ? `${money(plan.recurringCents)} ${t("annually")}`
+            : `${money(plan.enrollmentCents)} ${t("oneTime")} + ${money(plan.recurringCents)} ${t("monthly")}`;
+          const popular = plan.code === "PRO";
+          return (
+            <Link key={plan.code} href={`/app/upgrade?plan=${plan.code}`} className="no-underline" prefetch>
+              <PlanCardShell
+                name={plan.name}
+                price={price}
+                detail={`${plan.leads} leads · ${plan.impressions.toLocaleString("en-US")} impressions`}
+                cta={`${t("choose")} ${plan.name}`}
+                popular={popular}
+                popularLabel="Most popular"
+              />
+            </Link>
+          );
+        })}
+      </div>
       <div className="table-wrap">
         <table>
           <thead>
@@ -333,26 +355,6 @@ async function Pricing({ t, n, flash }: { t: Awaited<ReturnType<typeof getTransl
             <Row label="Team lead levels" cells={plans.map((plan) => String(plan.teamLeadLevels))} />
           </tbody>
         </table>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {plans.map((plan) => {
-          const price = plan.interval === "year"
-            ? `${money(plan.recurringCents)} ${t("annually")}`
-            : `${money(plan.enrollmentCents)} ${t("oneTime")} + ${money(plan.recurringCents)} ${t("monthly")}`;
-          const popular = plan.code === "PRO";
-          return (
-            <Link key={plan.code} href={`/app/upgrade?plan=${plan.code}`} className="no-underline" prefetch>
-              <PlanCardShell
-                name={plan.name}
-                price={price}
-                detail={`${plan.leads} leads · ${plan.impressions.toLocaleString("en-US")} impressions`}
-                cta={`${t("choose")} ${plan.name}`}
-                popular={popular}
-                popularLabel="Most popular"
-              />
-            </Link>
-          );
-        })}
       </div>
       <p className="text-sm text-muted">{t("planKept")}</p>
       <p className="text-sm">{t("metaNote")}</p>
@@ -440,13 +442,18 @@ export async function ProductView({ id, t, shopLabel, member, locale }: { id: st
 
 function Contact({ t, n, locale, flash }: { t: Awaited<ReturnType<typeof getTranslations>>; n: Awaited<ReturnType<typeof getTranslations>>; locale: string; flash: React.ReactNode }) {
   return (
-    <section className="grid gap-4">
-      <PageHead title={n("contact")} intro={t("contactPrefill")} crumbs={[{ href: "/", label: n("home") }, { label: n("contact") }]} />
-      {flash}
-      <p>{ADDRESS}</p>
-      <p><a className="underline" href={SUPPORT_WHATSAPP}>{SUPPORT_WHATSAPP}</a></p>
-      <p><a className="underline" href={NOTIFY_WHATSAPP}>{NOTIFY_WHATSAPP}</a></p>
-      <form action={sendContact} className="card grid gap-3 p-5" autoComplete="off">
+    <section className="grid gap-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,32rem)] lg:items-start lg:justify-center lg:gap-10">
+      <div className="grid gap-4 lg:col-span-2">
+        <PageHead title={n("contact")} intro={t("contactPrefill")} crumbs={[{ href: "/", label: n("home") }, { label: n("contact") }]} />
+        {flash}
+      </div>
+      <aside className="card grid gap-3 p-5">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">{n("contact")}</p>
+        <p className="text-sm leading-relaxed">{ADDRESS}</p>
+        <p><a className="break-all text-sm underline decoration-white/20 underline-offset-4" href={SUPPORT_WHATSAPP}>{SUPPORT_WHATSAPP}</a></p>
+        <p><a className="break-all text-sm underline decoration-white/20 underline-offset-4" href={NOTIFY_WHATSAPP}>{NOTIFY_WHATSAPP}</a></p>
+      </aside>
+      <form action={sendContact} className="card grid gap-3 p-5 md:p-6" autoComplete="off">
         <HiddenLocale locale={locale} />
         <label className="field"><span>{t("name")}</span><input name="name" autoComplete="off" required /></label>
         <label className="field"><span>{t("email")}</span><input name="email" type="email" autoComplete="off" required /></label>
@@ -488,12 +495,12 @@ function Privacy({ t, n }: { t: Awaited<ReturnType<typeof getTranslations>>; n: 
 
 function Register({ t, n, locale, flash }: { t: Awaited<ReturnType<typeof getTranslations>>; n: Awaited<ReturnType<typeof getTranslations>>; locale: string; flash: React.ReactNode }) {
   return (
-    <section className="grid gap-4">
+    <section className="mx-auto grid w-full max-w-2xl gap-4">
       <PageHead title="Create Your Free Account" intro={t("optionalSponsor")} crumbs={[{ href: "/", label: n("home") }, { label: n("register") }]} />
       <Countdown target={ACTIVE_UNTIL} />
       <p className="text-sm text-muted">{t("activeHelp")}</p>
       {flash}
-      <form action={registerMember} className="card grid gap-3 p-5" autoComplete="off">
+      <form action={registerMember} className="card grid gap-3 p-5 md:p-6" autoComplete="off">
         <HiddenLocale locale={locale} />
         <div className="grid gap-3 md:grid-cols-2">
           <label className="field"><span>{t("firstName")}</span><input name="firstName" autoComplete="off" required /></label>

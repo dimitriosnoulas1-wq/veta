@@ -57,7 +57,7 @@ export function PublicChrome({ children, loggedIn, admin }: { children: React.Re
   }, []);
 
   return (
-    <div className="relative z-[1] min-h-screen">
+    <div className="relative z-[1] flex min-h-screen flex-col">
       <a className="skip" href="#content">{t("skip")}</a>
       <header className={`public-header sticky top-0 z-40 ${solid || open ? "is-solid" : ""}`}>
         <div className="container-site flex h-16 items-center justify-between gap-3 md:h-[4.25rem]">
@@ -114,8 +114,8 @@ export function PublicChrome({ children, loggedIn, admin }: { children: React.Re
           </nav>
         ) : null}
       </header>
-      <main id="content" className="page-enter">{children}</main>
-      <footer className="mt-8 border-t border-line bg-[color:var(--bg-elevated)]">
+      <main id="content" className="page-enter flex-1">{children}</main>
+      <footer className="mt-auto border-t border-line bg-[color:var(--bg-elevated)]">
         <div className="container-site section-y !py-16">
           <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
             <div className="grid gap-3">
@@ -237,7 +237,7 @@ export function MemberChrome({ children, firstName, admin }: { children: React.R
           ))}
         </div>
       </aside>
-      <div className="min-w-0 pb-24 md:pb-0">
+      <div className="flex min-h-screen min-w-0 flex-col pb-[4.75rem] md:pb-0">
         <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-[color:var(--glass-strong)] px-4 py-3 backdrop-blur-xl">
           <button type="button" className="btn btn-ghost md:hidden" aria-expanded={open} onClick={() => setOpen(true)}>
             <Menu size={18} aria-hidden="true" />
@@ -272,14 +272,14 @@ export function MemberChrome({ children, firstName, admin }: { children: React.R
             </details>
           </div>
         </header>
-        <main id="content" className="page-enter mx-auto grid max-w-[1200px] gap-6 px-4 py-6 md:px-6 md:py-8">{children}</main>
-        <footer className="hidden px-6 py-6 text-sm text-muted md:block">
+        <main id="content" className="page-enter mx-auto w-full max-w-[1200px] flex-1 grid content-start gap-6 px-4 py-6 md:px-6 md:py-8">{children}</main>
+        <footer className="mt-auto hidden px-6 py-6 text-sm text-muted md:block">
           <p>Copyright © 2026 VateLife</p>
           <a className="underline" href="#content">{t("toTop")}</a>
         </footer>
       </div>
-      <nav className="bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-line bg-[color:var(--glass-strong)] px-2 pt-2 backdrop-blur-xl md:hidden" aria-label={n("member")}>
-        <ul className="mx-auto grid max-w-lg grid-cols-5 gap-1">
+      <nav className="bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-line bg-[color:var(--glass-strong)] px-1 pt-1.5 backdrop-blur-xl md:hidden" aria-label={n("member")}>
+        <ul className="mx-auto grid max-w-lg grid-cols-5 gap-0.5">
           {BOTTOM.map((item) => {
             const Icon = item.icon;
             const active = item.href === "/app" ? pathname === "/app" : pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -288,10 +288,10 @@ export function MemberChrome({ children, firstName, admin }: { children: React.R
                 <Link
                   href={item.href}
                   prefetch
-                  className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-semibold no-underline ${active ? "text-orange" : "text-muted"}`}
+                  className={`flex min-h-[3.5rem] flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 text-[9px] font-semibold leading-tight no-underline ${active ? "text-orange" : "text-muted"}`}
                 >
-                  <Icon size={20} aria-hidden="true" strokeWidth={active ? 2.4 : 1.8} />
-                  <span>{item.label}</span>
+                  <Icon size={18} aria-hidden="true" strokeWidth={active ? 2.4 : 1.8} />
+                  <span className="max-w-full truncate">{item.label}</span>
                 </Link>
               </li>
             );

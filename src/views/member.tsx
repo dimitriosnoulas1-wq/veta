@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { CaptchaFields, CardLink, CourseCard, DataTable, Grid, HiddenLocale, Notice, PageHead } from "@/components/ui";
 import { AnimatedCounter, CopyField, Countdown, LockNotice, TeamTree, TotpPanel, WithdrawCode } from "@/components/client";
-import { KpiTile, ProgressRing } from "@/components/graphics";
+import { CourseThumb, KpiTile, ProgressRing } from "@/components/graphics";
 import { YouTubeLite } from "@/components/media";
 import { MemberChrome } from "@/components/shell";
 import { ACADEMIES, AD_PACKS, BOXOKO, BRIDGE_STEPS, CHAT_STRATEGIES, EMAIL_PROVIDERS, EMAIL_SEQUENCES, GLOBAL_LEAD_TOTAL, INVITE_CHANNELS, INVITE_PHASES, LEAD_LEGEND, MESSENGERS, NOTIFICATION_KEYS, NOTIFY_WHATSAPP, PLAY_STORE, POSITIONING, REFERRAL_LEGEND, REPLAY_CENTS, SOCIAL, SPONSOR, SUPPORT_WHATSAPP, TOOL_GROUPS, TRAININGS, TRAFFIC, VERIFIERS, WITHDRAW_FEE_CENTS, ACTIVE_UNTIL } from "@/content/catalog";
@@ -160,16 +160,14 @@ async function Dashboard({ user, t }: { user: Member; t: T }) {
       <PageHead title="Dashboard" intro={`${t("welcome")}, ${user.firstName}`} crumbs={[{ label: "Dashboard" }]} />
       {continueCourse ? (
         <section className="card grid gap-4 p-5 md:grid-cols-[14rem_1fr_auto] md:items-center">
-          <div className="overflow-hidden rounded-lg border border-line">
-            <div className="aspect-[16/10] bg-gradient-to-br from-violet/25 to-orange/20" />
-          </div>
+          <CourseThumb seed={`${continueCourse.id} ${continueCourse.title}`} title={continueCourse.title} />
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">{t("progress")}</p>
             <h2 className="display mt-1 text-2xl">{continueCourse.title}</h2>
             <p className="mt-1 text-sm text-muted">{t("progress")}: {continueDone} {t("of")} {continueTotal}</p>
             <div className="progress-bar mt-3 max-w-md"><span style={{ width: `${continuePct}%` }} /></div>
           </div>
-          <Link className="btn btn-primary w-fit" href={`/app/learn/${continueCourse.academy}/${continueCourse.id}`} prefetch>
+          <Link className="btn btn-primary w-fit self-center" href={`/app/learn/${continueCourse.academy}/${continueCourse.id}`} prefetch>
             {t("watch")}
           </Link>
         </section>
@@ -192,13 +190,10 @@ async function Dashboard({ user, t }: { user: Member; t: T }) {
           />
         ))}
       </div>
-      <section className="grid gap-3">
-        <h2 className="display text-2xl">Dashboard</h2>
-        <Grid>
-          {quick.map(([href, title]) => <CardLink key={href} href={href} title={title} seed={title} action={t("open")} />)}
-          <CardLink href="/plan" title="Compensation Plan" seed="compensation" action={t("open")} />
-        </Grid>
-      </section>
+      <Grid>
+        {quick.map(([href, title]) => <CardLink key={href} href={href} title={title} seed={title} action={t("open")} />)}
+        <CardLink href="/plan" title="Compensation Plan" seed="compensation" action={t("open")} />
+      </Grid>
       <Notice>NEXT WAVE Positioning: {POSITIONING.paidPending} Paid-Pending Members, {POSITIONING.freeMembers} Free Members. {t("snapshot")}.</Notice>
       <div className="grid gap-3 md:grid-cols-2">
         <CopyField label="YOUR INVITING LINK" value={`https://vateplan.com/ref/${user.username}`} />
