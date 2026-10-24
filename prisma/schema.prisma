@@ -1,0 +1,415 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  MEMBER
+  ADMIN
+}
+
+enum MemberStatus {
+  FREE
+  PAID_PENDING
+  PAID
+  EXPIRED
+}
+
+enum PlanCode {
+  BASIC
+  PRO
+  ELITE
+  VIP
+}
+
+enum ProductKind {
+  EBOOK
+  PHYSICAL
+  OFFER
+}
+
+enum PaymentMethod {
+  BALANCE
+  CRYPTO
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REJECTED
+}
+
+enum TicketStatus {
+  OPEN
+  CLOSED
+}
+
+model User {
+  id                     String       @id @default(cuid())
+  email                  String       @unique
+  emailVerified          DateTime?
+  passwordHash           String?
+  firstName              String       @default("")
+  lastName               String       @default("")
+  username               String       @unique
+  country                String?
+  language               String       @default("en")
+  phone                  String?
+  role                   Role         @default(MEMBER)
+  planCode               PlanCode?
+  status                 MemberStatus @default(FREE)
+  activeUntil            DateTime?
+  balanceCents           Int          @default(0)
+  adCredits              Int          @default(0)
+  shoppingBalanceCents   Int          @default(0)
+  savingsCents           Int          @default(0)
+  pendingWithdrawalCents Int          @default(0)
+  totalWithdrawnCents    Int          @default(0)
+  autoRenew              Boolean      @default(false)
+  replayUntil            DateTime?
+  totpSecret             String?
+  totpEnabled            Boolean      @default(false)
+  sponsorUsername        String?
+  avatarUpdatedAt        DateTime?
+  createdAt              DateTime     @default(now())
+  accounts               Account[]
+  sessions               Session[]
+  notifications          NotificationPrefs?
+  testimony              Testimonial?
+  addresses              Address[]
+  tickets                Ticket[]
+  payments               Payment[]
+  progress               LessonProgress[]
+  orders                 Order[]
+  cart                   CartItem[]
+  ads                    Ad[]
+  vouchers               Voucher[]
+  withdrawals            Withdrawal[]
+  earnings               Earning[]
+  payout                 PayoutAccount?
+  messengers             Messenger?
+}
+
+model NotificationPrefs {
+  userId            String  @id
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loginAttempt      Boolean @default(true)
+  rewards           Boolean @default(true)
+  withdrawal        Boolean @default(true)
+  customerUpgrades  Boolean @default(true)
+  prospect          Boolean @default(true)
+  commission        Boolean @default(true)
+  admin             Boolean @default(true)
+}
+
+model Messenger {
+  userId      String  @id
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  telegram    String  @default("")
+  whatsapp    String  @default("")
+  wechat      String  @default("")
+  hangouts    String  @default("")
+  viber       String  @default("")
+  line        String  @default("")
+  band        String  @default("")
+  snapchat    String  @default("")
+  discord     String  @default("")
+  slack       String  @default("")
+  kik         String  @default("")
+  kakaotalk   String  @default("")
+  messenger   String  @default("")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Plan {
+  code                    PlanCode @id
+  name                    String
+  enrollmentCents         Int
+  recurringCents          Int
+  interval                String
+  leads                   Int
+  leadsOnRenewal          Int
+  impressions             Int
+  impressionsOnRenewal    Int
+  softwares               Int
+  waCast                  Boolean
+  tgCast                  Boolean
+  leadsCatcher            Boolean
+  metaWa                  Boolean
+  giftProducts            Int
+  liveCoaching            String
+  voucherCents            Int
+  placement               String
+  directCommissionCents   Int
+  matrixDepth             Int
+  teamLeadLevels          Int
+}
+
+model Product {
+  id               String      @id
+  kind             ProductKind
+  category         String
+  title            String
+  priceCents       Int
+  wasCents         Int
+  memberCents      Int
+  detail           String      @default("")
+  cart             CartItem[]
+  orderItems       OrderItem[]
+}
+
+model Course {
+  id       String   @id
+  academy  String
+  title    String
+  access   String
+  summary  String   @default("")
+  modules  Int      @default(1)
+  sort     Int
+  lessons  Lesson[]
+}
+
+model Lesson {
+  id        String           @id @default(cuid())
+  courseId  String
+  title     String
+  position  Int
+  videoId   String?
+  note      String           @default("")
+  course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress  LessonProgress[]
+
+  @@unique([courseId, position])
+}
+
+model LessonProgress {
+  id         String   @id @default(cuid())
+  userId     String
+  lessonId   String
+  completed  Boolean  @default(false)
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+}
+
+model Payment {
+  id          String         @id @default(cuid())
+  userId      String
+  amountCents Int
+  method      PaymentMethod
+  status      PaymentStatus  @default(PENDING)
+  description String
+  createdAt   DateTime       @default(now())
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Ticket {
+  id         String        @id @default(cuid())
+  number     String        @unique
+  userId     String
+  department String
+  subject    String
+  status     TicketStatus  @default(OPEN)
+  createdAt  DateTime      @default(now())
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages   TicketMessage[]
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  author    String
+  body      String
+  createdAt DateTime @default(now())
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+}
+
+model Address {
+  id         String  @id @default(cuid())
+  userId     String
+  name       String
+  receiver   String
+  phone      String
+  line       String
+  city       String
+  state      String
+  country    String
+  postal     String
+  info       String  @default("")
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  userId    String
+  productId String
+  qty       Int     @default(1)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  number      String      @unique
+  userId      String
+  totalCents  Int
+  memberCents Int
+  status      String
+  createdAt   DateTime    @default(now())
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       OrderItem[]
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  productId   String
+  title       String
+  qty         Int
+  memberCents Int
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product @relation(fields: [productId], references: [id])
+}
+
+model Ad {
+  id          String   @id @default(cuid())
+  userId      String
+  kind        String
+  name        String
+  title       String   @default("")
+  line1       String   @default("")
+  line2       String   @default("")
+  url         String
+  size        String   @default("")
+  imagePath   String   @default("")
+  credits     Int
+  clicks      Int      @default(0)
+  impressions Int      @default(0)
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Voucher {
+  id        String    @id @default(cuid())
+  userId    String
+  planCode  PlanCode
+  code      String    @unique
+  usedBy    String?
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PayoutAccount {
+  userId String @id
+  label  String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Withdrawal {
+  id          String        @id @default(cuid())
+  userId      String
+  amountCents Int
+  status      PaymentStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Earning {
+  id          String   @id @default(cuid())
+  userId      String
+  amountCents Int
+  info        String
+  bucket      String
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Testimonial {
+  userId String @id
+  subject String
+  body    String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Faq {
+  id       String @id @default(cuid())
+  category String
+  question String
+  answer   String
+  sort     Int    @default(0)
+}
+
+model NewsItem {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  createdAt DateTime @default(now())
+}
+
+model Article {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  createdAt DateTime @default(now())
+}
+
+model CalendarEvent {
+  id    String @id @default(cuid())
+  title String
+  when  String
+  href  String
+  note  String @default("")
+}
+
+model ContactMessage {
+  id         String   @id @default(cuid())
+  name       String
+  email      String
+  department String
+  subject    String
+  body       String
+  createdAt  DateTime @default(now())
+}
